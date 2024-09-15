@@ -1,10 +1,11 @@
-import { View, Text, ScrollView, Image, ImageBackground } from "react-native";
+import { View, Text, ScrollView, Image, ImageBackground, Alert } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
+import { signIn, getUserLabels } from "../../lib/appwrite";
 
 const singInProp = () => {
   const [form, setForm] = useState({
@@ -14,13 +15,35 @@ const singInProp = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = () => {};
+  const submit = async () => {
+    if (!form.email || !form.password) {
+      Alert.alert("Error", "Llene todos los campos");
+    }
+    setIsSubmitting(true);
+    try {
+      const user = await signIn(form.email, form.password);
+      if (user) {
+        const label = await getUserLabels();
+        console.log(label);
+        if (label === "portero") {
+          router.replace("/home");
+        } else {
+          Alert.alert("Administrador no encontrado");
+        }
+      }
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+      console.log(form.email);
+    }
+  };
 
   return (
     <SafeAreaView>
       <ScrollView>
         <ImageBackground source={images.wall} resizeMode={"cover"}>
-          <View className="w-full mb-6 justify-top items-center min-h-[100vh] px-3">
+          <View className="w-full justify-center items-center px-4 min-h-[100vh]">
             <View className="mt-3 max-w-[80px] w-full">
               <Image
                 source={images.logo}
